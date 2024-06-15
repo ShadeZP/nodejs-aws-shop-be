@@ -1,17 +1,33 @@
-// import * as cdk from 'aws-cdk-lib';
-// import { Template } from 'aws-cdk-lib/assertions';
-// import * as ProductService from '../lib/product-service-stack';
+import { Product } from '../lambda/Product.model';
 
-// example test. To run these tests, uncomment this file along with the
-// example resource in lib/product-service-stack.ts
-test('SQS Queue Created', () => {
-//   const app = new cdk.App();
-//     // WHEN
-//   const stack = new ProductService.ProductServiceStack(app, 'MyTestStack');
-//     // THEN
-//   const template = Template.fromStack(stack);
+// handler.test.js
+const { handler: getProductsHandler } = require('../lambda/get_products');
+const { handler: getProductByIdHandler } = require('../lambda/get_product_by_id');
+const { products } = require('../lambda/products.mock');
 
-//   template.hasResourceProperties('AWS::SQS::Queue', {
-//     VisibilityTimeout: 300
-//   });
+describe('getProductsHandler', () => {
+  it('should return all products', async () => {
+    const result = await getProductsHandler();
+    expect(result.statusCode).toBe(200);
+    expect(JSON.parse(result.body)).toEqual(products);
+  });
+});
+
+describe('getProductByIdHandler', () => {
+  it('should return product if id is valid', async () => {
+    const idToFind = '1';
+    const expectedProduct = products.find((p: Product) => p.id === idToFind);
+    const event = { pathParameters: { id: idToFind } };
+    const result = await getProductByIdHandler(event);
+    expect(result.statusCode).toBe(200);
+    expect(JSON.parse(result.body)).toEqual(expectedProduct);
+  });
+
+  it('should return 404 if product not found', async () => {
+    const idToFind = 'not-existing-id';
+    const event = { pathParameters: { id: idToFind } };
+    const result = await getProductByIdHandler(event);
+    expect(result.statusCode).toBe(404);
+    expect(JSON.parse(result.body)).toEqual({ message: 'Product not found' });
+  });
 });
