@@ -1,0 +1,71 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Products API
+servers:
+  - url: 'https://94jaxlvv1h.execute-api.eu-west-1.amazonaws.com/prod'
+    description: The base path for your Amazon API Gateway deployment
+paths:
+  /products:
+    get:
+      summary: Get all products
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: The product ID
+                    name:
+                      type: string
+                      description: The product name
+                    price:
+                      type: integer
+                      description: The product price
+                  required:
+                    - id
+                    - name
+                    - price
+        '500':
+          description: Server error
+  /products/{id}:
+    get:
+      summary: Get a product by ID
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: The ID of the product
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The product ID
+                  name:
+                    type: string
+                    description: The product name
+                  price:
+                    type: integer
+                    description: The product price
+                required:
+                  - id
+                  - name
+                  - price
+        '404':
+          description: Product not found
+        '500':
+          description: Server error
