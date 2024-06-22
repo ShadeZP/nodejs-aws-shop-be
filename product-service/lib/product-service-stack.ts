@@ -31,6 +31,15 @@ export class ProductServiceStack extends cdk.Stack {
       },
     });
 
+    const createProductLambda = new lambda.Function(this, 'createProductHandler', {
+      runtime: lambda.Runtime.NODEJS_16_X,
+      code: lambda.Code.fromAsset('lambda'),
+      handler: 'create_product.handler',
+      environment: {
+        PRODUCTS_TABLE_NAME: productsTable.tableName,
+      },
+    });
+
     const api = new apigateway.RestApi(this, 'HelloWorldApi', {
       restApiName: 'Products Service',
     });
@@ -43,9 +52,14 @@ export class ProductServiceStack extends cdk.Stack {
     const getProductByIdIntegration = new apigateway.LambdaIntegration(getProductsByIdLambda);
     product.addMethod('GET', getProductByIdIntegration);
 
-    productsTable.grantReadWriteData(getProductsLambda);
+    const createProductIntegration = new apigateway.LambdaIntegration(createProductLambda);
+    products.addMethod('POST', createProductIntegration);
+
+    productsTable.grantReadData(getProductsLambda);
     productsTable.grantReadData(getProductsByIdLambda);
-    stocksTable.grantReadWriteData(getProductsLambda);
+    productsTable.grantReadWriteData(createProductLambda);
+    stocksTable.grantReadData(getProductsLambda);
     stocksTable.grantReadData(getProductsByIdLambda);
+    stocksTable.grantReadWriteData(createProductLambda);
   }
 }
