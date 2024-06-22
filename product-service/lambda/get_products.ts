@@ -3,8 +3,9 @@ import { Product, ProductResponse, Stock } from './Product.model';
 const AWS = require('aws-sdk');
 const docClient = new AWS.DynamoDB.DocumentClient();
 
-exports.handler = async () => {
-  console.log('Fetching products..');
+exports.handler = async (event: any) => {
+  console.log('event: ', event);
+
   const productsParams = {
     TableName: process.env.PRODUCTS_TABLE_NAME,
   };
@@ -14,13 +15,13 @@ exports.handler = async () => {
   };
 
   try {
-    const [productsData, stocksData] = await Promise.all([
+    const [productsData, stocksData]: [{ Items: Product[] }, { Items: Stock[] }] = await Promise.all([
       docClient.scan(productsParams).promise(),
       docClient.scan(stockssParams).promise(),
     ]);
 
-    const data: ProductResponse = productsData.Items.map((product: Product) => {
-      const stock = stocksData.Items.find((stock: Stock) => stock.product_id === product.id);
+    const data: ProductResponse[] = productsData.Items.map((product) => {
+      const stock = stocksData.Items.find((stock) => stock.product_id === product.id);
       return {
         ...product,
         count: stock ? stock.count : 0,
