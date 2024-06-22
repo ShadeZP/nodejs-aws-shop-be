@@ -2,21 +2,33 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 
 export class ProductServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    const productsTable = dynamodb.Table.fromTableName(this, 'productsTable', 'products');
+    const stocksTable = dynamodb.Table.fromTableName(this, 'stocksTable', 'stocks');
+
     const getProductsLambda = new lambda.Function(this, 'getProductsHandler', {
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: lambda.Runtime.NODEJS_16_X,
       code: lambda.Code.fromAsset('lambda'),
       handler: 'get_products.handler',
+      environment: {
+        PRODUCTS_TABLE_NAME: productsTable.tableName,
+        STOCKS_TABLE_NAME: stocksTable.tableName,
+      },
     });
 
     const getProductsByIdLambda = new lambda.Function(this, 'getProductsByIdHandler', {
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: lambda.Runtime.NODEJS_16_X,
       code: lambda.Code.fromAsset('lambda'),
       handler: 'get_product_by_id.handler',
+      environment: {
+        PRODUCTS_TABLE_NAME: productsTable.tableName,
+        STOCKS_TABLE_NAME: stocksTable.tableName,
+      },
     });
 
     const api = new apigateway.RestApi(this, 'HelloWorldApi', {
@@ -30,5 +42,10 @@ export class ProductServiceStack extends cdk.Stack {
     const product = products.addResource('{id}');
     const getProductByIdIntegration = new apigateway.LambdaIntegration(getProductsByIdLambda);
     product.addMethod('GET', getProductByIdIntegration);
+
+    productsTable.grantReadWriteData(getProductsLambda);
+    productsTable.grantReadData(getProductsByIdLambda);
+    stocksTable.grantReadWriteData(getProductsLambda);
+    stocksTable.grantReadData(getProductsByIdLambda);
   }
 }
