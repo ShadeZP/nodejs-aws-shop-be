@@ -1,5 +1,15 @@
 export interface Product {
   id: string;
-  name: string;
+  title: string;
+  description: string;
   price: number;
+}
+
+export interface Stock {
+  product_id: string;
+  count: number;
+}
+
+export interface ProductResponse extends Product {
+  count: number;
 }
