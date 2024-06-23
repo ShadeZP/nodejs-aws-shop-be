@@ -37,6 +37,7 @@ export class ProductServiceStack extends cdk.Stack {
       handler: 'create_product.handler',
       environment: {
         PRODUCTS_TABLE_NAME: productsTable.tableName,
+        STOCKS_TABLE_NAME: stocksTable.tableName,
       },
     });
 
@@ -45,15 +46,15 @@ export class ProductServiceStack extends cdk.Stack {
     });
 
     const products = api.root.addResource('products');
-    const getProductsIntegration = new apigateway.LambdaIntegration(getProductsLambda);
-    products.addMethod('GET', getProductsIntegration);
-
     const product = products.addResource('{id}');
-    const getProductByIdIntegration = new apigateway.LambdaIntegration(getProductsByIdLambda);
-    product.addMethod('GET', getProductByIdIntegration);
 
+    const getProductsIntegration = new apigateway.LambdaIntegration(getProductsLambda);
     const createProductIntegration = new apigateway.LambdaIntegration(createProductLambda);
+    const getProductByIdIntegration = new apigateway.LambdaIntegration(getProductsByIdLambda);
+
+    products.addMethod('GET', getProductsIntegration);
     products.addMethod('POST', createProductIntegration);
+    product.addMethod('GET', getProductByIdIntegration);
 
     productsTable.grantReadData(getProductsLambda);
     productsTable.grantReadData(getProductsByIdLambda);
